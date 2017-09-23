@@ -26,12 +26,9 @@ public class MainActivity extends AppCompatActivity {
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
-                // All your networking logic
-                // should be here
-                // Create URL
-                URL githubEndpoint = null;
+                URL endpoint = null;
                 try {
-                    githubEndpoint = new URL("https://api.github.com/");
+                    endpoint = new URL("https://carhack2017.azurewebsites.net/");
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 }
@@ -39,13 +36,11 @@ public class MainActivity extends AppCompatActivity {
                 // Create connection
                 HttpsURLConnection myConnection = null;
                 try {
-                    myConnection = (HttpsURLConnection) githubEndpoint.openConnection();
+                    myConnection = (HttpsURLConnection) endpoint.openConnection();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                myConnection.setRequestProperty("User-Agent", "my-rest-app-v0.1");
-                myConnection.setRequestProperty("Accept", "application/vnd.github.v3+json");
-                myConnection.setRequestProperty("Contact-Me", "hathibelagal@example.com");
+                myConnection.setRequestProperty("User-Agent", "car-hack");
 
                 try {
                     if (myConnection.getResponseCode() == 200) {
@@ -56,24 +51,28 @@ public class MainActivity extends AppCompatActivity {
                         jsonReader.beginObject();
                         while (jsonReader.hasNext()) { // Loop through all keys
                             String key = jsonReader.nextName(); // Fetch the next key
-                            if (key.equals("organization_url")) { // Check if desired key
+                            if (key.equals("value")) { // Check if desired key
                                 // Fetch the value as a String
-                                String value = jsonReader.nextString();
 
-                                TextView newtext = (TextView) findViewById(R.id.my_output);
-                                newtext.setText(value);
-                                // Do something with the value
-                                // ...
+                                final String value = jsonReader.nextString();
 
-                                break; // Break out of the loop
+                                runOnUiThread(new Runnable() { // any UI changes must be inside here
+                                    @Override
+                                    public void run() {
+                                        TextView newText = (TextView) findViewById(R.id.my_output);
+                                        newText.setText(value);
+                                    }
+                                });
+                                break; // Break out of the loop once desired value is found
                             } else {
                                 jsonReader.skipValue(); // Skip values of other keys
                             }
                         }
+                        // Further processing here
+
+                        // close up
                         jsonReader.close();
                         myConnection.disconnect();
-
-                        // Further processing here
                     } else {
                         // Error handling code goes here
                     }
@@ -82,31 +81,5 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
-
-//
-//        AsyncHttpClient client = new AsyncHttpClient();
-//        client.get("https://www.google.com", new AsyncHttpResponseHandler() {
-//
-//            @Override
-//            public void onStart() {
-//                // called before request is started
-//            }
-//
-//            @Override
-//            public void onSuccess(int statusCode, Header[] headers, byte[] response) {
-//                // called when response HTTP status is "200 OK"
-//            }
-//
-//            @Override
-//            public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
-//                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-//            }
-//
-//            @Override
-//            public void onRetry(int retryNo) {
-//                // called when request is retried
-//            }
-//        });
     }
 }
