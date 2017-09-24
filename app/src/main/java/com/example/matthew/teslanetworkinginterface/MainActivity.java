@@ -1,85 +1,109 @@
 package com.example.matthew.teslanetworkinginterface;
 
-import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.JsonReader;
-import android.widget.TextView;
+import android.support.v7.app.AppCompatActivity;
 
-import com.loopj.android.http.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 
+
 public class MainActivity extends AppCompatActivity {
+
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                URL endpoint = null;
-                try {
-                    endpoint = new URL("https://carhack2017.azurewebsites.net/");
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
+        JSONObject urlParameters = new JSONObject();
+        try {
+            urlParameters.put("key", "thotties");
+            urlParameters.put("value", "Thottie"); // password
+            System.out.println("Created JSON object");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        int timeout=5000;
+        URL url;
+        HttpURLConnection connection = null;
+        try {
+            // Create connection
 
-                // Create connection
-                HttpsURLConnection myConnection = null;
-                try {
-                    myConnection = (HttpsURLConnection) endpoint.openConnection();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                myConnection.setRequestProperty("User-Agent", "car-hack");
+            url = new URL("http://http://carhack2017.azurewebsites.net/postadata");
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type",
+                    "application/json");
 
-                try {
-                    if (myConnection.getResponseCode() == 200) {
-                        // Success
-                        InputStream responseBody = myConnection.getInputStream();
-                        InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
-                        JsonReader jsonReader = new JsonReader(responseBodyReader);
-                        jsonReader.beginObject();
-                        while (jsonReader.hasNext()) { // Loop through all keys
-                            String key = jsonReader.nextName(); // Fetch the next key
-                            if (key.equals("value")) { // Check if desired key
-                                // Fetch the value as a String
+            connection.setRequestProperty("Content-Length",
+                    "" + Integer.toString(urlParameters.toString().getBytes().length));
+            connection.setRequestProperty("Content-Language", "en-US");
 
-                                final String value = jsonReader.nextString();
-
-                                runOnUiThread(new Runnable() { // any UI changes must be inside here
-                                    @Override
-                                    public void run() {
-                                        TextView newText = (TextView) findViewById(R.id.my_output);
-                                        newText.setText(value);
-                                    }
-                                });
-                                break; // Break out of the loop once desired value is found
-                            } else {
-                                jsonReader.skipValue(); // Skip values of other keys
-                            }
-                        }
-                        // Further processing here
-
-                        // close up
-                        jsonReader.close();
-                        myConnection.disconnect();
-                    } else {
-                        // Error handling code goes here
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            connection.setUseCaches(false);
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
+            connection.setConnectTimeout(timeout);
+            connection.setReadTimeout(timeout);
+            System.out.println("Create Connection");
+            // Send request
+            DataOutputStream wr = new DataOutputStream(
+                    connection.getOutputStream());
+            wr.writeBytes(urlParameters.toString());
+            wr.flush();
+            wr.close();
+            System.out.println("Send Request");
+            // Get Response
+            InputStream is = connection.getInputStream();
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+            String line;
+            StringBuffer response = new StringBuffer();
+            while ((line = rd.readLine()) != null) {
+                response.append(line);
+                response.append('\r');
             }
-        });
+            rd.close();
+            System.out.println("Get Response");
+
+        } catch (SocketTimeoutException ex) {
+            ex.printStackTrace();
+
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException ex) {
+
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 }
+
